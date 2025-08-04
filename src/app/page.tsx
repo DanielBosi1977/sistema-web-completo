@@ -1,41 +1,15 @@
-'use client';
+import { MadeWithLasy } from "@/components/made-with-lasy";
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/components/auth/auth-provider';
-import { USER_ROLES } from '@/lib/constants';
-import { Loader2 } from 'lucide-react';
-
-export default function HomePage() {
-  const { user, loading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        router.push('/login');
-      } else {
-        // Redirecionar baseado no role
-        if (user.profile?.role === USER_ROLES.ADMIN) {
-          router.push('/admin');
-        } else if (user.profile?.role === USER_ROLES.IMOBILIARIA) {
-          if (!user.profile.senha_alterada) {
-            router.push('/alterar-senha');
-          } else {
-            router.push('/imobiliaria');
-          }
-        }
-      }
-    }
-  }, [user, loading, router]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
-
-  return null;
+export default function Home() {
+  return (
+    <div className="grid grid-rows-[1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 sm:p-20 font-[family-name:var(--font-geist-sans)]">
+      <main className="flex flex-col gap-8 row-start-1 items-center sm:items-start">
+        <h1 className="text-4xl font-bold mb-4">Bem Vindo ao Seu Novo App</h1>
+        <p className="text-xl text-gray-600">
+          Hora de transformar ideias em realidade!
+        </p>
+      </main>
+      <MadeWithLasy />
+    </div>
+  );
 }
