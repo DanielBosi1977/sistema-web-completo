@@ -1,0 +1,91 @@
+'use client';
+
+import { useAuth } from '@/contexts/auth-context';
+import { APP_NAME } from '@/lib/constants';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { User, LogOut, Settings, Menu } from 'lucide-react';
+import Link from 'next/link';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+
+export function Header({ toggleSidebar }: { toggleSidebar?: () => void }) {
+  const { user, profile, signOut, isAdmin } = useAuth();
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.push('/login');
+  };
+
+  const handlePerfilClick = () => {
+    if (isAdmin) {
+      router.push('/admin/perfil');
+    } else {
+      router.push('/imobiliaria/perfil');
+    }
+  };
+
+  return (
+    <header className="sticky top-0 z-50 w-full border-b bg-background">
+      <div className="flex h-16 items-center px-4 sm:px-6">
+        {toggleSidebar && (
+          <Button variant="ghost" size="icon" className="mr-2 md:hidden" onClick={toggleSidebar}>
+            <Menu className="h-5 w-5" />
+            <span className="sr-only">Toggle Menu</span>
+          </Button>
+        )}
+        
+        <div className="flex items-center">
+          <Image 
+            src="/s8-logo.png" 
+            alt={APP_NAME} 
+            width={40} 
+            height={40} 
+            className="mr-2"
+          />
+          <span className="text-lg font-semibold tracking-tight">{APP_NAME}</span>
+        </div>
+        
+        <div className="ml-auto flex items-center gap-2">
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full">
+                  <User className="h-5 w-5" />
+                  <span className="sr-only">Menu de usuário</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>
+                  {profile?.nome_responsavel || profile?.email}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handlePerfilClick}>
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Perfil</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleSignOut}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Sair</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button asChild variant="default">
+              <Link href="/login">Entrar</Link>
+            </Button>
+          )}
+        </div>
+      </div>
+    </header>
+  );
+}
