@@ -3,10 +3,12 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth/auth-provider';
+import { Navbar } from '@/components/layout/navbar';
+import { AdminDashboard } from '@/components/admin/dashboard';
 import { USER_ROLES } from '@/lib/constants';
 import { Loader2 } from 'lucide-react';
 
-export default function HomePage() {
+export default function AdminPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
 
@@ -14,17 +16,8 @@ export default function HomePage() {
     if (!loading) {
       if (!user) {
         router.push('/login');
-      } else {
-        // Redirecionar baseado no role
-        if (user.profile?.role === USER_ROLES.ADMIN) {
-          router.push('/admin');
-        } else if (user.profile?.role === USER_ROLES.IMOBILIARIA) {
-          if (!user.profile.senha_alterada) {
-            router.push('/alterar-senha');
-          } else {
-            router.push('/imobiliaria');
-          }
-        }
+      } else if (user.profile?.role !== USER_ROLES.ADMIN) {
+        router.push('/login');
       }
     }
   }, [user, loading, router]);
@@ -37,5 +30,18 @@ export default function HomePage() {
     );
   }
 
-  return null;
+  if (!user || user.profile?.role !== USER_ROLES.ADMIN) {
+    return null;
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div className="px-4 py-6 sm:px-0">
+          <AdminDashboard />
+        </div>
+      </main>
+    </div>
+  );
 }
