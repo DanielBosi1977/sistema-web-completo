@@ -18,7 +18,7 @@ export default function ImobiliariaDashboard() {
     aprovados: 0,
     rejeitados: 0,
   });
-  const [analises, setAnalises] = useState([]);
+  const [analises, setAnalises] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { createTheme } from 'next-themes';
+import { type Theme } from 'next-themes';
 
 // Cores extraídas do logo da S8 Garante
 export const s8Colors = {
