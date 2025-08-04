@@ -10,6 +10,23 @@ import { Loader2, FileText, Building, Users, CheckCircle, XCircle, Clock } from 
 import Link from 'next/link';
 import { toast } from 'sonner';
 
+// Definindo interfaces para os dados
+interface Analise {
+  id: string;
+  nome_locatario: string;
+  plano: string;
+  status: string;
+  [key: string]: any; // Permite propriedades adicionais
+}
+
+interface Imobiliaria {
+  id: string;
+  nome_empresa?: string;
+  email: string;
+  senha_alterada?: boolean;
+  [key: string]: any; // Permite propriedades adicionais
+}
+
 export default function AdminDashboard() {
   const { user } = useAuth();
   const [resumoAnalises, setResumoAnalises] = useState({
@@ -22,8 +39,9 @@ export default function AdminDashboard() {
     total: 0,
     ativas: 0,
   });
-  const [analises, setAnalises] = useState<any[]>([]);
-  const [imobiliarias, setImobiliarias] = useState<any[]>([]);
+  // Usando as interfaces para definir os tipos
+  const [analises, setAnalises] = useState<Analise[]>([]);
+  const [imobiliarias, setImobiliarias] = useState<Imobiliaria[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -60,9 +78,9 @@ export default function AdminDashboard() {
       
       // Calcular resumos
       const totalAnalises = analisesData?.length || 0;
-      const aguardando = analisesData?.filter((a: any) => a.status === 'Aguardando').length || 0;
-      const aprovados = analisesData?.filter((a: any) => a.status === 'Aprovado').length || 0;
-      const rejeitados = analisesData?.filter((a: any) => a.status === 'Rejeitado').length || 0;
+      const aguardando = analisesData?.filter((a) => a.status === 'Aguardando').length || 0;
+      const aprovados = analisesData?.filter((a) => a.status === 'Aprovado').length || 0;
+      const rejeitados = analisesData?.filter((a) => a.status === 'Rejeitado').length || 0;
       
       setResumoAnalises({ 
         total: totalAnalises, 
@@ -72,7 +90,7 @@ export default function AdminDashboard() {
       });
       
       const totalImobiliarias = imobiliariasData?.length || 0;
-      const ativas = imobiliariasData?.filter((i: any) => i.senha_alterada).length || 0;
+      const ativas = imobiliariasData?.filter((i) => i.senha_alterada).length || 0;
       
       setResumoImobiliarias({
         total: totalImobiliarias,
@@ -152,7 +170,7 @@ export default function AdminDashboard() {
                 </CardDescription>
               </div>
               <Button asChild size="sm">
-                <Link href="/admin/analises">Ver todas</Link>
+                <a href="/admin/analises">Ver todas</a>
               </Button>
             </CardHeader>
             <CardContent>
@@ -162,7 +180,7 @@ export default function AdminDashboard() {
                 </div>
               ) : analises.length > 0 ? (
                 <div className="space-y-4">
-                  {analises.map((analise: any) => (
+                  {analises.map((analise) => (
                     <div key={analise.id} className="flex items-center justify-between border-b pb-4">
                       <div>
                         <p className="font-medium">{analise.nome_locatario}</p>
@@ -191,9 +209,9 @@ export default function AdminDashboard() {
                         </div>
                       </div>
                       <Button size="sm" asChild>
-                        <Link href={`/admin/analises/${analise.id}`}>
+                        <a href={`/admin/analises/${analise.id}`}>
                           Ver detalhes
-                        </Link>
+                        </a>
                       </Button>
                     </div>
                   ))}
@@ -215,7 +233,7 @@ export default function AdminDashboard() {
                 </CardDescription>
               </div>
               <Button asChild size="sm">
-                <Link href="/admin/imobiliarias">Ver todas</Link>
+                <a href="/admin/imobiliarias">Ver todas</a>
               </Button>
             </CardHeader>
             <CardContent>
@@ -225,7 +243,7 @@ export default function AdminDashboard() {
                 </div>
               ) : imobiliarias.length > 0 ? (
                 <div className="space-y-4">
-                  {imobiliarias.map((imobiliaria: any) => (
+                  {imobiliarias.map((imobiliaria) => (
                     <div key={imobiliaria.id} className="flex items-center justify-between border-b pb-4">
                       <div>
                         <p className="font-medium">{imobiliaria.nome_empresa || 'Sem nome'}</p>
@@ -247,9 +265,9 @@ export default function AdminDashboard() {
                         </div>
                       </div>
                       <Button size="sm" asChild>
-                        <Link href={`/admin/imobiliarias/${imobiliaria.id}`}>
+                        <a href={`/admin/imobiliarias/${imobiliaria.id}`}>
                           Ver detalhes
-                        </Link>
+                        </a>
                       </Button>
                     </div>
                   ))}
@@ -262,10 +280,10 @@ export default function AdminDashboard() {
               
               <div className="mt-4 flex justify-center">
                 <Button asChild>
-                  <Link href="/admin/imobiliarias/nova">
+                  <a href="/admin/imobiliarias/nova">
                     <Building className="mr-2 h-4 w-4" />
                     Nova Imobiliária
-                  </Link>
+                  </a>
                 </Button>
               </div>
             </CardContent>
