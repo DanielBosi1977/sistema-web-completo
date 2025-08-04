@@ -7,25 +7,23 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/auth-context';
 import { Loader2, FileText, Building, Users, CheckCircle, XCircle, Clock } from 'lucide-react';
-import Link from 'next/link';
 import { toast } from 'sonner';
 
-// Definindo interfaces para os dados
-interface Analise {
+type AnaliseType = {
   id: string;
   nome_locatario: string;
   plano: string;
   status: string;
-  [key: string]: any; // Permite propriedades adicionais
-}
+  [key: string]: any;
+};
 
-interface Imobiliaria {
+type ImobiliariaType = {
   id: string;
   nome_empresa?: string;
   email: string;
   senha_alterada?: boolean;
-  [key: string]: any; // Permite propriedades adicionais
-}
+  [key: string]: any;
+};
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -39,9 +37,11 @@ export default function AdminDashboard() {
     total: 0,
     ativas: 0,
   });
-  // Usando as interfaces para definir os tipos
-  const [analises, setAnalises] = useState<Analise[]>([]);
-  const [imobiliarias, setImobiliarias] = useState<Imobiliaria[]>([]);
+  
+  // Tipagem explícita para resolver o erro
+  const [analises, setAnalises] = useState<AnaliseType[]>([]);
+  const [imobiliarias, setImobiliarias] = useState<ImobiliariaType[]>([]);
+  
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -78,9 +78,9 @@ export default function AdminDashboard() {
       
       // Calcular resumos
       const totalAnalises = analisesData?.length || 0;
-      const aguardando = analisesData?.filter((a) => a.status === 'Aguardando').length || 0;
-      const aprovados = analisesData?.filter((a) => a.status === 'Aprovado').length || 0;
-      const rejeitados = analisesData?.filter((a) => a.status === 'Rejeitado').length || 0;
+      const aguardando = analisesData?.filter((a: any) => a.status === 'Aguardando').length || 0;
+      const aprovados = analisesData?.filter((a: any) => a.status === 'Aprovado').length || 0;
+      const rejeitados = analisesData?.filter((a: any) => a.status === 'Rejeitado').length || 0;
       
       setResumoAnalises({ 
         total: totalAnalises, 
@@ -90,7 +90,7 @@ export default function AdminDashboard() {
       });
       
       const totalImobiliarias = imobiliariasData?.length || 0;
-      const ativas = imobiliariasData?.filter((i) => i.senha_alterada).length || 0;
+      const ativas = imobiliariasData?.filter((i: any) => i.senha_alterada).length || 0;
       
       setResumoImobiliarias({
         total: totalImobiliarias,

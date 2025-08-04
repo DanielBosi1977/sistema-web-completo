@@ -10,6 +10,15 @@ import { Loader2, FileText, UserPlus, CheckCircle, XCircle, Clock } from 'lucide
 import Link from 'next/link';
 import { toast } from 'sonner';
 
+// Definindo um tipo para análises
+type AnaliseType = {
+  id: string;
+  nome_locatario: string;
+  plano: string;
+  status: string;
+  [key: string]: any;
+};
+
 export default function ImobiliariaDashboard() {
   const { user } = useAuth();
   const [resumo, setResumo] = useState({
@@ -18,7 +27,8 @@ export default function ImobiliariaDashboard() {
     aprovados: 0,
     rejeitados: 0,
   });
-  const [analises, setAnalises] = useState<any[]>([]);
+  // Usando o tipo definido para resolver o problema de tipagem
+  const [analises, setAnalises] = useState<AnaliseType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -128,7 +138,7 @@ export default function ImobiliariaDashboard() {
                 </div>
               ) : analises.length > 0 ? (
                 <div className="space-y-4">
-                  {analises.map((analise: any) => (
+                  {analises.map((analise) => (
                     <div key={analise.id} className="flex items-center justify-between border-b pb-4">
                       <div>
                         <p className="font-medium">{analise.nome_locatario}</p>
