@@ -22,8 +22,8 @@ export default function AdminDashboard() {
     total: 0,
     ativas: 0,
   });
-  const [analises, setAnalises] = useState([]);
-  const [imobiliarias, setImobiliarias] = useState([]);
+  const [analises, setAnalises] = useState<any[]>([]);
+  const [imobiliarias, setImobiliarias] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
