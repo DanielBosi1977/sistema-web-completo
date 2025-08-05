@@ -13,38 +13,54 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { signIn } from '@/lib/auth';
 import { toast } from 'sonner';
 import Link from 'next/link';
-import { Loader2, Shield, AlertTriangle, Info } from 'lucide-react';
+import { Loader2, Shield, AlertTriangle, Info, ArrowRight } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { ADMIN_EMAIL } from '@/lib/constants';
 import Image from 'next/image';
 
 export default function AdminLoginPage() {
   const searchParams = useSearchParams();
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState('adm@s8garante.com.br');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [diagnosticMode, setDiagnosticMode] = useState(false);
-  const [diagnosticInfo, setDiagnosticInfo] = useState<any>(null);
+  const [loginStep, setLoginStep] = useState<'checking' | 'ready' | 'failed'>('checking');
+  const [userExists, setUserExists] = useState(false);
   const router = useRouter();
   
   useEffect(() => {
-    // Verificar se temos email na query string (vindo da página setup)
-    const emailParam = searchParams.get('email');
-    const setupMode = searchParams.get('setupMode');
-    
-    if (emailParam) {
-      setEmail(emailParam);
-      
-      // Se estamos vindo da página de setup, usar senha padrão
-      if (setupMode === 'true') {
-        setPassword('S8garante2023@');
+    // Verificar se o usuário admin existe no sistema
+    const checkAdminExists = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('email', 'adm@s8garante.com.br')
+          .eq('tipo_usuario', 'admin')
+          .single();
+        
+        if (error) {
+          console.error("Erro ao verificar admin:", error);
+          setLoginStep('failed');
+          return;
+        }
+        
+        if (data) {
+          setUserExists(true);
+          setLoginStep('ready');
+        } else {
+          setUserExists(false);
+          setLoginStep('failed');
+        }
+      } catch (e) {
+        console.error("Exceção ao verificar admin:", e);
+        setLoginStep('failed');
       }
-    }
-  }, [searchParams]);
+    };
+    
+    checkAdminExists();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,7 +68,11 @@ export default function AdminLoginPage() {
     setIsLoading(true);
 
     try {
-      const { data, error } = await signIn(email, password);
+      // Login simples com Supabase
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password
+      });
       
       if (error) {
         setError('Credenciais inválidas. Verifique seu e-mail e senha.');
@@ -90,52 +110,6 @@ export default function AdminLoginPage() {
     }
   };
 
-  const runDiagnostic = async () => {
-    setDiagnosticMode(true);
-    const info: any = {
-      auth: { status: 'unknown' },
-      admin: { status: 'unknown' },
-      session: { status: 'unknown' }
-    };
-    
-    try {
-      // Verificar conexão com o Supabase
-      const { data: authData, error: authError } = await supabase.auth.getSession();
-      
-      info.auth = {
-        status: authError ? 'error' : 'success',
-        error: authError ? authError.message : null,
-        sessionExists: authData?.session != null
-      };
-      
-      // Verificar se o usuário admin existe
-      const { data: adminUser, error: adminUserError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('email', 'adm@s8garante.com.br')
-        .eq('tipo_usuario', 'admin')
-        .single();
-      
-      info.admin = {
-        status: adminUserError ? 'error' : 'success',
-        error: adminUserError ? adminUserError.message : null,
-        exists: adminUser != null,
-        details: adminUser ? {
-          id: adminUser.id,
-          tipo_usuario: adminUser.tipo_usuario
-        } : null
-      };
-      
-      setDiagnosticInfo(info);
-    } catch (e) {
-      console.error('Erro no diagnóstico:', e);
-      setDiagnosticInfo({
-        status: 'error',
-        error: e
-      });
-    }
-  };
-
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
       <div className="mb-8 flex flex-col items-center">
@@ -164,94 +138,106 @@ export default function AdminLoginPage() {
             Acesso restrito a administradores do sistema
           </CardDescription>
         </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4 pt-6">
-            {error && (
-              <div className="rounded-md bg-destructive/15 p-3">
-                <div className="flex items-center">
-                  <AlertTriangle className="mr-2 h-4 w-4 text-destructive" />
-                  <p className="text-sm font-medium text-destructive">{error}</p>
+        
+        {loginStep === 'checking' && (
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+            <p>Verificando configuração...</p>
+          </CardContent>
+        )}
+        
+        {loginStep === 'failed' && (
+          <CardContent className="py-6">
+            <div className="rounded-md bg-yellow-50 p-4 mb-6">
+              <div className="flex">
+                <AlertTriangle className="h-5 w-5 text-yellow-400 mr-2" />
+                <div>
+                  <h3 className="text-sm font-medium text-yellow-800">Configuração necessária</h3>
+                  <div className="mt-2 text-sm text-yellow-700">
+                    <p>
+                      O usuário administrador não está configurado ou não foi encontrado. 
+                      É necessário configurar o acesso administrativo antes de continuar.
+                    </p>
+                  </div>
                 </div>
               </div>
-            )}
-            
-            <div className="space-y-2">
-              <Label htmlFor="email">E-mail de Administrador</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder={ADMIN_EMAIL}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Senha</Label>
-                <Link
-                  href="/esqueci-senha"
-                  className="text-sm text-primary underline-offset-4 hover:underline"
-                >
-                  Esqueceu a senha?
-                </Link>
-              </div>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
             </div>
             
-            {diagnosticMode && diagnosticInfo && (
-              <div className="mt-4 border rounded p-3 text-xs space-y-2 bg-gray-50">
-                <p className="font-semibold">Informações de diagnóstico:</p>
-                <pre className="overflow-auto max-h-32 whitespace-pre-wrap">
-                  {JSON.stringify(diagnosticInfo, null, 2)}
-                </pre>
-              </div>
-            )}
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Autenticando...
-                </>
-              ) : (
-                'Acessar Painel Administrativo'
-              )}
+            <Button asChild className="w-full">
+              <Link href="/admin-setup">
+                Configurar Administrador
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
             </Button>
-            <div className="flex justify-between w-full">
-              <Button 
-                type="button" 
-                variant="ghost" 
-                size="sm"
-                onClick={runDiagnostic}
-                className="text-xs"
-              >
-                <Info className="h-3 w-3 mr-1" />
-                Diagnóstico
+          </CardContent>
+        )}
+        
+        {loginStep === 'ready' && (
+          <form onSubmit={handleSubmit}>
+            <CardContent className="space-y-4 pt-6">
+              {error && (
+                <div className="rounded-md bg-destructive/15 p-3">
+                  <div className="flex items-center">
+                    <AlertTriangle className="mr-2 h-4 w-4 text-destructive" />
+                    <p className="text-sm font-medium text-destructive">{error}</p>
+                  </div>
+                </div>
+              )}
+              
+              <div className="space-y-2">
+                <Label htmlFor="email">E-mail de Administrador</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Senha</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+                <p className="text-xs text-muted-foreground">
+                  Padrão: S8garante2023@ (caso não tenha sido alterada)
+                </p>
+              </div>
+            </CardContent>
+            <CardFooter className="flex flex-col space-y-4">
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Autenticando...
+                  </>
+                ) : (
+                  'Acessar Painel Administrativo'
+                )}
               </Button>
               
-              <Link
-                href="/login"
-                className="text-sm text-primary underline-offset-4 hover:underline"
-              >
-                Ir para login de imobiliárias
-              </Link>
-            </div>
-            
-            <div className="text-xs text-center text-gray-500 mt-4">
-              <Link href="/setup-admin" className="hover:underline">
-                Configurar administrador
-              </Link>
-            </div>
-          </CardFooter>
-        </form>
+              <div className="flex justify-between w-full">
+                <Link
+                  href="/admin-setup"
+                  className="text-sm text-primary underline-offset-4 hover:underline"
+                >
+                  Problemas com login?
+                </Link>
+                
+                <Link
+                  href="/login"
+                  className="text-sm text-primary underline-offset-4 hover:underline"
+                >
+                  Ir para login de imobiliárias
+                </Link>
+              </div>
+            </CardFooter>
+          </form>
+        )}
       </Card>
     </div>
   );
