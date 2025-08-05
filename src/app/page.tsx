@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import Image from "next/image";
 import { MadeWithLasy } from "@/components/made-with-lasy";
 import { 
   Building, 
@@ -10,6 +9,7 @@ import {
   Lock, 
   TrendingUp
 } from "lucide-react";
+import { LogoText } from "@/components/logo-text";
 
 export default function Home() {
   return (
@@ -18,13 +18,7 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <Image
-                src="/s8-logo.png"
-                alt="S8 Garante"
-                width={150}
-                height={50}
-                priority
-              />
+              <LogoText width={150} height={50} />
             </div>
             <div className="flex gap-2">
               <Button asChild variant="secondary">
@@ -146,13 +140,7 @@ export default function Home() {
           <div className="grid gap-8 md:grid-cols-3">
             <div>
               <div className="flex justify-start mb-4">
-                <Image
-                  src="/s8-logo.png"
-                  alt="S8 Garante"
-                  width={120}
-                  height={40}
-                  className="invert"
-                />
+                <LogoText width={120} height={40} className="invert" />
               </div>
               <p className="text-sm">Soluções completas em fiança locatícia para o mercado imobiliário.</p>
             </div>

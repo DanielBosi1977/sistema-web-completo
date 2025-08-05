@@ -15,7 +15,7 @@ import { User, LogOut, Settings, Menu, Shield } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
+import { LogoText } from '@/components/logo-text';
 
 export function Header({ toggleSidebar }: { toggleSidebar?: () => void }) {
   const { user, profile, signOut, isAdmin } = useAuth();
@@ -45,13 +45,7 @@ export function Header({ toggleSidebar }: { toggleSidebar?: () => void }) {
         )}
         
         <div className="flex items-center">
-          <Image 
-            src="/s8-logo.png" 
-            alt={APP_NAME} 
-            width={120} 
-            height={40} 
-            className="mr-2"
-          />
+          <LogoText width={120} height={40} className="mr-2" />
           {isAdmin && (
             <span className="ml-2 inline-flex items-center rounded-full bg-primary px-2 py-1 text-xs font-medium text-white">
               <Shield className="mr-1 h-3 w-3" />

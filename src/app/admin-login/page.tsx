@@ -17,7 +17,7 @@ import { toast } from 'sonner';
 import Link from 'next/link';
 import { Loader2, Shield, AlertTriangle, Info, ArrowRight } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import Image from 'next/image';
+import { LogoText } from '@/components/logo-text';
 
 export default function AdminLoginPage() {
   const searchParams = useSearchParams();
@@ -113,14 +113,7 @@ export default function AdminLoginPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
       <div className="mb-8 flex flex-col items-center">
-        <Image
-          src="/s8-logo.png"
-          alt="S8 Garante"
-          width={250}
-          height={100}
-          priority
-          className="mb-4"
-        />
+        <LogoText width={250} height={100} className="mb-4" />
         <h2 className="text-center text-2xl font-bold tracking-tight text-gray-900">
           Painel Administrativo
         </h2>
