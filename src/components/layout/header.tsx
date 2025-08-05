@@ -48,11 +48,10 @@ export function Header({ toggleSidebar }: { toggleSidebar?: () => void }) {
           <Image 
             src="/s8-logo.png" 
             alt={APP_NAME} 
-            width={40} 
+            width={120} 
             height={40} 
             className="mr-2"
           />
-          <span className="text-lg font-semibold tracking-tight">{APP_NAME}</span>
           {isAdmin && (
             <span className="ml-2 inline-flex items-center rounded-full bg-primary px-2 py-1 text-xs font-medium text-white">
               <Shield className="mr-1 h-3 w-3" />

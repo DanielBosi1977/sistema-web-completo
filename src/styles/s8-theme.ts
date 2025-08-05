@@ -1,4 +1,4 @@
-// Definindo nosso próprio tipo Theme em vez de importar
+// Definindo nosso próprio tipo Theme
 type Theme = {
   [key: string]: string;
 };
@@ -6,30 +6,30 @@ type Theme = {
 // Cores extraídas do logo da S8 Garante
 export const s8Colors = {
   primary: {
-    50: '#eef8fc',
-    100: '#d7eef8',
-    200: '#afe0f1',
-    300: '#78cae6',
-    400: '#3aafd7', // Cor principal do logo (azul)
-    500: '#1d95be',
-    600: '#1478a0',
-    700: '#115f7f',
-    800: '#134e67',
-    900: '#154256',
-    950: '#0e2b39',
+    50: '#fff6f2',
+    100: '#ffede5',
+    200: '#ffd7c5',
+    300: '#ffb696',
+    400: '#ff8a5e',
+    500: '#ff5f2e', // Cor principal do logo (laranja)
+    600: '#f94716',
+    700: '#d13710',
+    800: '#aa2e11',
+    900: '#8a2914',
+    950: '#4a140a',
   },
   secondary: {
-    50: '#f9f6f5',
-    100: '#f0e8e5',
-    200: '#e1d2cc',
-    300: '#cdb3a7',
-    400: '#b38c7d',
-    500: '#a0725f',
-    600: '#915c4a',
-    700: '#7c4b3c', // Cor secundária do logo (marrom)
-    800: '#663e31',
-    900: '#56352c',
-    950: '#2f1b16',
+    50: '#f6f6f6',
+    100: '#e7e7e7',
+    200: '#d1d1d1',
+    300: '#b0b0b0',
+    400: '#888888',
+    500: '#6d6d6d',
+    600: '#5d5d5d',
+    700: '#4f4f4f',
+    800: '#454545', 
+    900: '#3d3d3d', // Cor do texto "S8" (preto)
+    950: '#000000',
   },
   gray: {
     50: '#f8f8f8',
@@ -50,14 +50,14 @@ export const s8Colors = {
 export const s8Theme = {
   light: {
     background: '#ffffff',
-    foreground: s8Colors.gray[950],
+    foreground: s8Colors.secondary[950],
     card: '#ffffff',
-    'card-foreground': s8Colors.gray[950],
+    'card-foreground': s8Colors.secondary[950],
     popover: '#ffffff',
-    'popover-foreground': s8Colors.gray[950],
-    primary: s8Colors.primary[400],
+    'popover-foreground': s8Colors.secondary[950],
+    primary: s8Colors.primary[500],
     'primary-foreground': '#ffffff',
-    secondary: s8Colors.secondary[700],
+    secondary: s8Colors.secondary[900],
     'secondary-foreground': '#ffffff',
     muted: s8Colors.gray[100],
     'muted-foreground': s8Colors.gray[600],
@@ -67,16 +67,16 @@ export const s8Theme = {
     'destructive-foreground': '#ffffff',
     border: s8Colors.gray[200],
     input: s8Colors.gray[200],
-    ring: s8Colors.primary[400],
+    ring: s8Colors.primary[500],
   },
   dark: {
-    background: s8Colors.gray[950],
+    background: s8Colors.secondary[950],
     foreground: s8Colors.gray[100],
-    card: s8Colors.gray[900],
+    card: s8Colors.secondary[900],
     'card-foreground': s8Colors.gray[100],
-    popover: s8Colors.gray[900],
+    popover: s8Colors.secondary[900],
     'popover-foreground': s8Colors.gray[100],
-    primary: s8Colors.primary[400],
+    primary: s8Colors.primary[500],
     'primary-foreground': '#ffffff',
     secondary: s8Colors.secondary[700],
     'secondary-foreground': '#ffffff',
@@ -88,6 +88,6 @@ export const s8Theme = {
     'destructive-foreground': '#ffffff',
     border: s8Colors.gray[800],
     input: s8Colors.gray[800],
-    ring: s8Colors.primary[600],
+    ring: s8Colors.primary[500],
   },
 };

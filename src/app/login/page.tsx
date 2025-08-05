@@ -16,7 +16,8 @@ import { Label } from '@/components/ui/label';
 import { signIn } from '@/lib/auth';
 import { toast } from 'sonner';
 import Link from 'next/link';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Shield } from 'lucide-react';
+import Image from 'next/image';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -56,10 +57,24 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
-      <Card className="w-full max-w-md">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
+      <div className="mb-8 flex flex-col items-center">
+        <Image
+          src="/s8-logo.png"
+          alt="S8 Garante"
+          width={250}
+          height={100}
+          priority
+          className="mb-4"
+        />
+        <h2 className="text-center text-2xl font-bold tracking-tight text-gray-900">
+          Sistema de Fiança Locatícia
+        </h2>
+      </div>
+      
+      <Card className="w-full max-w-md border-primary/20">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">S8 Garante</CardTitle>
+          <CardTitle className="text-2xl font-bold">Acessar Sistema</CardTitle>
           <CardDescription>
             Entre com seu e-mail e senha para acessar o sistema
           </CardDescription>
@@ -120,8 +135,9 @@ export default function LoginPage() {
               <div>
                 <Link
                   href="/admin-login"
-                  className="text-primary underline-offset-4 hover:underline"
+                  className="flex items-center justify-center text-primary underline-offset-4 hover:underline"
                 >
+                  <Shield className="mr-1 h-4 w-4" />
                   Área de Administradores
                 </Link>
               </div>

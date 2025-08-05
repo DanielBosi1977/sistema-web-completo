@@ -23,10 +23,23 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          50: "#fff6f2",
+          100: "#ffede5",
+          200: "#ffd7c5",
+          300: "#ffb696",
+          400: "#ff8a5e",
+          500: "#ff5f2e", // Cor principal do logo (laranja)
+          600: "#f94716",
+          700: "#d13710",
+          800: "#aa2e11",
+          900: "#8a2914",
+          950: "#4a140a",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
+          900: "#3d3d3d", // Cor do texto "S8" (preto)
+          950: "#000000",
         },
         muted: {
           DEFAULT: "hsl(var(--muted))",
