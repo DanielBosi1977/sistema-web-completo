@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -15,52 +15,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import Link from 'next/link';
-import { Loader2, Shield, AlertTriangle, Info, ArrowRight } from 'lucide-react';
+import { Loader2, Shield, AlertTriangle, Info } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { LogoText } from '@/components/logo-text';
 
 export default function AdminLoginPage() {
-  const searchParams = useSearchParams();
   const [email, setEmail] = useState('adm@s8garante.com.br');
   const [password, setPassword] = useState('S8garante2023@');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [loginStep, setLoginStep] = useState<'checking' | 'ready' | 'failed'>('checking');
-  const [userExists, setUserExists] = useState(false);
   const router = useRouter();
-  
-  useEffect(() => {
-    // Verificar se o usuário admin existe no sistema
-    const checkAdminExists = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('email', 'adm@s8garante.com.br')
-          .eq('tipo_usuario', 'admin')
-          .single();
-        
-        if (error) {
-          console.error("Erro ao verificar admin:", error);
-          setLoginStep('failed');
-          return;
-        }
-        
-        if (data) {
-          setUserExists(true);
-          setLoginStep('ready');
-        } else {
-          setUserExists(false);
-          setLoginStep('failed');
-        }
-      } catch (e) {
-        console.error("Exceção ao verificar admin:", e);
-        setLoginStep('failed');
-      }
-    };
-    
-    checkAdminExists();
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,26 +39,41 @@ export default function AdminLoginPage() {
       });
       
       if (error) {
-        setError('Credenciais inválidas. Verifique seu e-mail e senha.');
+        console.log("Erro de login:", error);
+        if (error.message.includes('Email not confirmed')) {
+          setError('É necessário configurar o administrador primeiro. Clique em "Configurar Administrador".');
+        } else if (error.message.includes('Invalid login credentials')) {
+          setError('Credenciais inválidas. Verifique seu e-mail e senha ou configure o administrador.');
+        } else {
+          setError(error.message || 'Erro ao fazer login');
+        }
         return;
       }
 
       if (data.user) {
-        // Verificar se o usuário é admin
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('tipo_usuario')
-          .eq('id', data.user.id)
-          .single();
-        
-        if (profileError || !profile) {
-          setError('Erro ao verificar permissões do usuário');
-          return;
-        }
-        
-        if (profile.tipo_usuario !== 'admin') {
-          setError('Este login é exclusivo para administradores.');
-          // Fazer logout para evitar que usuários não admin fiquem logados
+        // Verificar se o usuário é admin (forma simplificada)
+        try {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('tipo_usuario')
+            .eq('id', data.user.id)
+            .single();
+          
+          if (profileError) {
+            console.log("Erro ao buscar perfil:", profileError);
+            setError('Erro ao verificar tipo de usuário. Configure o administrador primeiro.');
+            await supabase.auth.signOut();
+            return;
+          }
+          
+          if (profile?.tipo_usuario !== 'admin') {
+            setError('Este login é exclusivo para administradores.');
+            await supabase.auth.signOut();
+            return;
+          }
+        } catch (profileCheckError) {
+          console.error("Exceção ao verificar perfil:", profileCheckError);
+          setError('Erro ao verificar permissões. Configure o administrador primeiro.');
           await supabase.auth.signOut();
           return;
         }
@@ -102,9 +81,9 @@ export default function AdminLoginPage() {
         toast.success('Login administrativo realizado com sucesso');
         router.push('/admin');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro no login:', error);
-      setError('Ocorreu um erro durante o login');
+      setError('Ocorreu um erro durante o login. Tente usar a página de configuração.');
     } finally {
       setIsLoading(false);
     }
@@ -132,105 +111,85 @@ export default function AdminLoginPage() {
           </CardDescription>
         </CardHeader>
         
-        {loginStep === 'checking' && (
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-            <p>Verificando configuração...</p>
-          </CardContent>
-        )}
-        
-        {loginStep === 'failed' && (
-          <CardContent className="py-6">
-            <div className="rounded-md bg-yellow-50 p-4 mb-6">
+        <form onSubmit={handleSubmit}>
+          <CardContent className="space-y-4 pt-6">
+            {error && (
+              <div className="rounded-md bg-yellow-50 p-3">
+                <div className="flex items-center">
+                  <AlertTriangle className="mr-2 h-4 w-4 text-yellow-600" />
+                  <p className="text-sm font-medium text-yellow-600">{error}</p>
+                </div>
+              </div>
+            )}
+            
+            <div className="rounded-md bg-blue-50 p-3">
               <div className="flex">
-                <AlertTriangle className="h-5 w-5 text-yellow-400 mr-2" />
+                <Info className="mr-2 h-4 w-4 text-blue-600" />
                 <div>
-                  <h3 className="text-sm font-medium text-yellow-800">Configuração necessária</h3>
-                  <div className="mt-2 text-sm text-yellow-700">
-                    <p>
-                      O usuário administrador não está configurado ou não foi encontrado. 
-                      É necessário configurar o acesso administrativo antes de continuar.
-                    </p>
-                  </div>
+                  <p className="text-sm text-blue-600">
+                    Se estiver tendo problemas para acessar, use a página de{" "}
+                    <Link href="/admin-setup" className="font-medium underline">
+                      Configuração de Administrador
+                    </Link>
+                    .
+                  </p>
                 </div>
               </div>
             </div>
             
-            <Button asChild className="w-full">
-              <Link href="/admin-setup">
-                Configurar Administrador
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
+            <div className="space-y-2">
+              <Label htmlFor="email">E-mail de Administrador</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Senha</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <p className="text-xs text-muted-foreground">
+                Padrão: S8garante2023@ (caso não tenha sido alterada)
+              </p>
+            </div>
           </CardContent>
-        )}
-        
-        {loginStep === 'ready' && (
-          <form onSubmit={handleSubmit}>
-            <CardContent className="space-y-4 pt-6">
-              {error && (
-                <div className="rounded-md bg-destructive/15 p-3">
-                  <div className="flex items-center">
-                    <AlertTriangle className="mr-2 h-4 w-4 text-destructive" />
-                    <p className="text-sm font-medium text-destructive">{error}</p>
-                  </div>
-                </div>
+          <CardFooter className="flex flex-col space-y-4">
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Autenticando...
+                </>
+              ) : (
+                'Acessar Painel Administrativo'
               )}
+            </Button>
+            
+            <div className="flex justify-between w-full">
+              <Link
+                href="/admin-setup"
+                className="text-sm text-primary underline-offset-4 hover:underline"
+              >
+                Configurar Administrador
+              </Link>
               
-              <div className="space-y-2">
-                <Label htmlFor="email">E-mail de Administrador</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Senha</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-                <p className="text-xs text-muted-foreground">
-                  Padrão: S8garante2023@ (caso não tenha sido alterada)
-                </p>
-              </div>
-            </CardContent>
-            <CardFooter className="flex flex-col space-y-4">
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Autenticando...
-                  </>
-                ) : (
-                  'Acessar Painel Administrativo'
-                )}
-              </Button>
-              
-              <div className="flex justify-between w-full">
-                <Link
-                  href="/admin-setup"
-                  className="text-sm text-primary underline-offset-4 hover:underline"
-                >
-                  Problemas com login?
-                </Link>
-                
-                <Link
-                  href="/login"
-                  className="text-sm text-primary underline-offset-4 hover:underline"
-                >
-                  Ir para login de imobiliárias
-                </Link>
-              </div>
-            </CardFooter>
-          </form>
-        )}
+              <Link
+                href="/login"
+                className="text-sm text-primary underline-offset-4 hover:underline"
+              >
+                Ir para login de imobiliárias
+              </Link>
+            </div>
+          </CardFooter>
+        </form>
       </Card>
     </div>
   );
