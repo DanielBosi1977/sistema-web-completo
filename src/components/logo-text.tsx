@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 
 interface LogoTextProps {
   className?: string;
@@ -6,17 +7,23 @@ interface LogoTextProps {
   height?: number;
 }
 
-export const LogoText = ({ className, width, height }: LogoTextProps) => {
+export const LogoText = ({ className, width = 180, height = 60 }: LogoTextProps) => {
+  const logoUrl = "https://lpotufpuptsgljekrzaf.supabase.co/storage/v1/object/public/media/app-2/images/1754326164627-ek8ut5hc6.JPG";
+  
   return (
-    <div 
-      className={`flex items-center justify-center bg-primary text-white font-bold rounded-md ${className}`}
-      style={{ 
-        width: width ? `${width}px` : '180px', 
-        height: height ? `${height}px` : '60px',
-        fontSize: width ? `${width / 10}px` : '18px'
-      }}
-    >
-      S8 GARANTE
+    <div className={className}>
+      <Image 
+        src={logoUrl} 
+        alt="S8 Garante" 
+        width={width} 
+        height={height}
+        style={{
+          objectFit: 'contain',
+          width: `${width}px`,
+          height: 'auto'
+        }}
+        priority
+      />
     </div>
   );
 };
