@@ -69,9 +69,11 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=sua_chave_anonima
 
 ### **Deploy Automático**
 
-1. Conecte seu repositório GitHub à Vercel
+1. Conecte seu repositório GitHub à Vercel seguindo o [guia de deploy](./DEPLOY.md)
 2. A Vercel detectará automaticamente Next.js
 3. O build será executado sem erros graças às otimizações
+
+Para instruções detalhadas sobre como configurar a integração GitHub-Vercel, consulte o [guia de deploy](./DEPLOY.md).
 
 ---
 
