@@ -2,12 +2,25 @@ import { supabase } from '@/lib/supabase';
 import { ADMIN_EMAIL } from './constants';
 
 export async function signIn(email: string, password: string) {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
-  
-  return { data, error };
+  try {
+    console.log('Tentando login com:', { email });
+    
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    
+    if (error) {
+      console.error('Erro de autenticação:', error);
+    } else {
+      console.log('Login bem-sucedido:', { userId: data.user?.id });
+    }
+    
+    return { data, error };
+  } catch (e) {
+    console.error('Exceção durante signIn:', e);
+    throw e;
+  }
 }
 
 export async function signUp(email: string, password: string) {

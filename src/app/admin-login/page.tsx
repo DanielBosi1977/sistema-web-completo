@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -16,17 +16,35 @@ import { Label } from '@/components/ui/label';
 import { signIn } from '@/lib/auth';
 import { toast } from 'sonner';
 import Link from 'next/link';
-import { Loader2, Shield, AlertTriangle } from 'lucide-react';
+import { Loader2, Shield, AlertTriangle, Info } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { ADMIN_EMAIL } from '@/lib/constants';
 import Image from 'next/image';
 
 export default function AdminLoginPage() {
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [diagnosticMode, setDiagnosticMode] = useState(false);
+  const [diagnosticInfo, setDiagnosticInfo] = useState<any>(null);
   const router = useRouter();
+  
+  useEffect(() => {
+    // Verificar se temos email na query string (vindo da página setup)
+    const emailParam = searchParams.get('email');
+    const setupMode = searchParams.get('setupMode');
+    
+    if (emailParam) {
+      setEmail(emailParam);
+      
+      // Se estamos vindo da página de setup, usar senha padrão
+      if (setupMode === 'true') {
+        setPassword('S8garante2023@');
+      }
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,6 +87,52 @@ export default function AdminLoginPage() {
       setError('Ocorreu um erro durante o login');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const runDiagnostic = async () => {
+    setDiagnosticMode(true);
+    const info: any = {
+      auth: { status: 'unknown' },
+      admin: { status: 'unknown' },
+      session: { status: 'unknown' }
+    };
+    
+    try {
+      // Verificar conexão com o Supabase
+      const { data: authData, error: authError } = await supabase.auth.getSession();
+      
+      info.auth = {
+        status: authError ? 'error' : 'success',
+        error: authError ? authError.message : null,
+        sessionExists: authData?.session != null
+      };
+      
+      // Verificar se o usuário admin existe
+      const { data: adminUser, error: adminUserError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('email', 'adm@s8garante.com.br')
+        .eq('tipo_usuario', 'admin')
+        .single();
+      
+      info.admin = {
+        status: adminUserError ? 'error' : 'success',
+        error: adminUserError ? adminUserError.message : null,
+        exists: adminUser != null,
+        details: adminUser ? {
+          id: adminUser.id,
+          tipo_usuario: adminUser.tipo_usuario
+        } : null
+      };
+      
+      setDiagnosticInfo(info);
+    } catch (e) {
+      console.error('Erro no diagnóstico:', e);
+      setDiagnosticInfo({
+        status: 'error',
+        error: e
+      });
     }
   };
 
@@ -140,6 +204,15 @@ export default function AdminLoginPage() {
                 required
               />
             </div>
+            
+            {diagnosticMode && diagnosticInfo && (
+              <div className="mt-4 border rounded p-3 text-xs space-y-2 bg-gray-50">
+                <p className="font-semibold">Informações de diagnóstico:</p>
+                <pre className="overflow-auto max-h-32 whitespace-pre-wrap">
+                  {JSON.stringify(diagnosticInfo, null, 2)}
+                </pre>
+              </div>
+            )}
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
             <Button type="submit" className="w-full" disabled={isLoading}>
@@ -152,12 +225,29 @@ export default function AdminLoginPage() {
                 'Acessar Painel Administrativo'
               )}
             </Button>
-            <div className="text-center text-sm">
+            <div className="flex justify-between w-full">
+              <Button 
+                type="button" 
+                variant="ghost" 
+                size="sm"
+                onClick={runDiagnostic}
+                className="text-xs"
+              >
+                <Info className="h-3 w-3 mr-1" />
+                Diagnóstico
+              </Button>
+              
               <Link
                 href="/login"
-                className="text-primary underline-offset-4 hover:underline"
+                className="text-sm text-primary underline-offset-4 hover:underline"
               >
                 Ir para login de imobiliárias
+              </Link>
+            </div>
+            
+            <div className="text-xs text-center text-gray-500 mt-4">
+              <Link href="/setup-admin" className="hover:underline">
+                Configurar administrador
               </Link>
             </div>
           </CardFooter>
