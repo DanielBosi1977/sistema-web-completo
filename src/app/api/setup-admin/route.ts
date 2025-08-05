@@ -21,7 +21,7 @@ export async function GET() {
     // Criar o usuário admin no sistema de autenticação
     const { data, error } = await supabase.auth.signUp({
       email: 'adm@s8garante.com.br',
-      password: 'S8garante2025@',
+      password: 'S8garante2023@',
     });
 
     if (error) {
