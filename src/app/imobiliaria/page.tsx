@@ -71,16 +71,24 @@ export default function ImobiliariaDashboard() {
         .eq('imobiliaria_id', user?.id)
         .eq('status', 'Rejeitado');
         
+      // Buscar IDs das análises primeiro
+      const { data: analiseIds } = await supabase
+        .from('analises')
+        .select('id')
+        .eq('imobiliaria_id', user?.id);
+      
       // Buscar contagem de documentos
-      const { count: totalDocumentos, error: documentoError } = await supabase
-        .from('documentos')
-        .select('*', { count: 'exact', head: true })
-        .in('analise_id', 
-          supabase
-            .from('analises')
-            .select('id')
-            .eq('imobiliaria_id', user?.id)
-        );
+      let totalDocumentos = 0;
+      if (analiseIds && analiseIds.length > 0) {
+        const { count, error: documentoError } = await supabase
+          .from('documentos')
+          .select('*', { count: 'exact', head: true })
+          .in('analise_id', analiseIds.map(a => a.id));
+          
+        if (!documentoError) {
+          totalDocumentos = count || 0;
+        }
+      }
 
       // Buscar análises recentes
       const { data: analisesRecentes, error: recentesError } = await supabase
@@ -99,7 +107,7 @@ export default function ImobiliariaDashboard() {
           rejeitadas: rejeitadasData?.length || 0
         },
         documentos: {
-          total: totalDocumentos || 0
+          total: totalDocumentos
         }
       });
 
