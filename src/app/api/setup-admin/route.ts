@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-export async function GET() {
+export async function POST() {
   try {
     // Obter as variáveis de ambiente diretamente
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';

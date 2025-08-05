@@ -22,7 +22,7 @@ import { LogoText } from '@/components/logo-text';
 export default function AdminLoginPage() {
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('adm@s8garante.com.br');
-  const [password, setPassword] = useState('');
+  const [password, setPassword] = useState('S8garante2023@');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [loginStep, setLoginStep] = useState<'checking' | 'ready' | 'failed'>('checking');

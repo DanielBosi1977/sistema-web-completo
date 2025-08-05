@@ -5,11 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, CheckCircle, XCircle, Info, RefreshCw, LockKeyhole } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
+import { LogoText } from '@/components/logo-text';
 
 // Componente de estágio
 const Stage = ({ 
@@ -106,14 +106,37 @@ export default function AdminSetupPage() {
         userId = existingUsers[0].id;
         console.log("Usuário admin encontrado, atualizando senha");
         
-        const { error: updatePasswordError } = await supabase.auth.admin.updateUserById(
-          userId,
-          { password: adminPassword }
-        );
+        // Tentar fazer login primeiro para verificar se a senha atual funciona
+        const { error: currentLoginError } = await supabase.auth.signInWithPassword({
+          email,
+          password: adminPassword
+        });
         
-        if (updatePasswordError) {
-          updateStage('createUser', 'error', `Erro ao atualizar senha: ${updatePasswordError.message}`);
-          throw new Error(`Password update failed: ${updatePasswordError.message}`);
+        if (currentLoginError) {
+          // Se não conseguir fazer login, criar um novo usuário
+          console.log("Não foi possível fazer login com a senha atual, criando novo usuário");
+          
+          // Deletar o usuário existente
+          const { error: deleteError } = await supabase.auth.admin.deleteUser(userId);
+          if (deleteError) {
+            console.log("Erro ao deletar usuário existente:", deleteError.message);
+          }
+          
+          // Criar novo usuário
+          const { data: userData, error: userError } = await supabase.auth.signUp({
+            email,
+            password: adminPassword
+          });
+          
+          if (userError || !userData.user) {
+            updateStage('createUser', 'error', userError?.message || 'Failed to create user');
+            throw new Error(`User creation failed: ${userError?.message}`);
+          }
+          
+          userId = userData.user.id;
+        } else {
+          // Login funcionou, fazer logout
+          await supabase.auth.signOut();
         }
       } else {
         // Criar novo usuário
@@ -205,14 +228,7 @@ export default function AdminSetupPage() {
       <Card className="w-full max-w-lg">
         <CardHeader>
           <div className="flex flex-col items-center mb-4">
-            <Image
-              src="/s8-logo.png"
-              alt="S8 Garante"
-              width={180}
-              height={80}
-              priority
-              className="mb-4"
-            />
+            <LogoText width={180} height={80} className="mb-4" />
           </div>
           <CardTitle className="text-center">Configuração de Administrador</CardTitle>
           <CardDescription className="text-center">
