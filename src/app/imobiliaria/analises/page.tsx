@@ -41,7 +41,7 @@ export default function AnalisesPage() {
   const [analises, setAnalises] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filtro, setFiltro] = useState('');
-  const [statusFiltro, setStatusFiltro] = useState('');
+  const [statusFiltro, setStatusFiltro] = useState('todos'); // Modificado para um valor válido
 
   useEffect(() => {
     if (user) {
@@ -97,14 +97,14 @@ export default function AnalisesPage() {
   };
 
   const filtrarAnalises = () => {
-    if (!filtro && !statusFiltro) return analises;
+    if (filtro === '' && statusFiltro === 'todos') return analises;
     
     return analises.filter(analise => {
-      const matchFiltro = !filtro || 
+      const matchFiltro = filtro === '' || 
         analise.nome_locatario.toLowerCase().includes(filtro.toLowerCase()) ||
         analise.cpf_locatario.includes(filtro);
       
-      const matchStatus = !statusFiltro || analise.status === statusFiltro;
+      const matchStatus = statusFiltro === 'todos' || analise.status === statusFiltro;
       
       return matchFiltro && matchStatus;
     });
@@ -157,7 +157,7 @@ export default function AnalisesPage() {
                   <SelectValue placeholder="Todos os status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os status</SelectItem>
+                  <SelectItem value="todos">Todos os status</SelectItem>
                   {STATUS_ANALISE.map((status) => (
                     <SelectItem key={status} value={status}>
                       {status}
@@ -222,7 +222,7 @@ export default function AnalisesPage() {
                 <FileText className="mx-auto h-12 w-12 text-gray-400" />
                 <h3 className="mt-2 text-lg font-medium">Nenhuma análise encontrada</h3>
                 <p className="mt-1 text-muted-foreground">
-                  {filtro || statusFiltro
+                  {filtro || statusFiltro !== 'todos'
                     ? 'Tente ajustar os filtros para encontrar o que procura.'
                     : 'Comece criando uma nova análise de locatário.'}
                 </p>

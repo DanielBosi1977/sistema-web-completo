@@ -41,8 +41,8 @@ export default function AdminAnalisesPage() {
   const [imobiliarias, setImobiliarias] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filtro, setFiltro] = useState('');
-  const [statusFiltro, setStatusFiltro] = useState('');
-  const [imobiliariaFiltro, setImobiliariaFiltro] = useState('');
+  const [statusFiltro, setStatusFiltro] = useState('todos'); // Valor válido
+  const [imobiliariaFiltro, setImobiliariaFiltro] = useState('todas'); // Valor válido
 
   useEffect(() => {
     if (user) {
@@ -111,16 +111,16 @@ export default function AdminAnalisesPage() {
   };
 
   const filtrarAnalises = () => {
-    if (!filtro && !statusFiltro && !imobiliariaFiltro) return analises;
+    if (filtro === '' && statusFiltro === 'todos' && imobiliariaFiltro === 'todas') return analises;
     
     return analises.filter(analise => {
-      const matchFiltro = !filtro || 
+      const matchFiltro = filtro === '' || 
         analise.nome_locatario.toLowerCase().includes(filtro.toLowerCase()) ||
         analise.cpf_locatario.includes(filtro);
       
-      const matchStatus = !statusFiltro || analise.status === statusFiltro;
+      const matchStatus = statusFiltro === 'todos' || analise.status === statusFiltro;
       
-      const matchImobiliaria = !imobiliariaFiltro || analise.imobiliaria_id === imobiliariaFiltro;
+      const matchImobiliaria = imobiliariaFiltro === 'todas' || analise.imobiliaria_id === imobiliariaFiltro;
       
       return matchFiltro && matchStatus && matchImobiliaria;
     });
@@ -165,7 +165,7 @@ export default function AdminAnalisesPage() {
                   <SelectValue placeholder="Todos os status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os status</SelectItem>
+                  <SelectItem value="todos">Todos os status</SelectItem>
                   {STATUS_ANALISE.map((status) => (
                     <SelectItem key={status} value={status}>
                       {status}
@@ -181,7 +181,7 @@ export default function AdminAnalisesPage() {
                   <SelectValue placeholder="Todas as imobiliárias" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas as imobiliárias</SelectItem>
+                  <SelectItem value="todas">Todas as imobiliárias</SelectItem>
                   {imobiliarias.map((imobiliaria) => (
                     <SelectItem key={imobiliaria.id} value={imobiliaria.id}>
                       {imobiliaria.nome_empresa || imobiliaria.email}
@@ -250,7 +250,7 @@ export default function AdminAnalisesPage() {
                 <FileText className="mx-auto h-12 w-12 text-gray-400" />
                 <h3 className="mt-2 text-lg font-medium">Nenhuma análise encontrada</h3>
                 <p className="mt-1 text-muted-foreground">
-                  {filtro || statusFiltro || imobiliariaFiltro
+                  {filtro || statusFiltro !== 'todos' || imobiliariaFiltro !== 'todas'
                     ? 'Tente ajustar os filtros para encontrar o que procura.'
                     : 'Ainda não há análises registradas no sistema.'}
                 </p>
