@@ -1,4 +1,7 @@
-import { type Theme } from 'next-themes';
+// Definindo nosso próprio tipo Theme em vez de importar
+type Theme = {
+  [key: string]: string;
+};
 
 // Cores extraídas do logo da S8 Garante
 export const s8Colors = {
