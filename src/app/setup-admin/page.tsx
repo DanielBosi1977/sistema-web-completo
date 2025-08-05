@@ -5,10 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, CheckCircle, XCircle, Info, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { LogoText } from '@/components/logo-text';
 
 export default function SetupAdminPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -32,7 +32,12 @@ export default function SetupAdminPage() {
   const handleSetupAdmin = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/setup-admin');
+      const response = await fetch('/api/setup-admin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
       const data = await response.json();
       
       setResult(data);
@@ -59,9 +64,8 @@ export default function SetupAdminPage() {
     setDirectLoginAttempt(true);
     
     try {
-      // Redirecionar para o login administrativo com as credenciais nos parâmetros de consulta
-      const url = `/admin-login?email=${encodeURIComponent(loginCredentials.email)}&setupMode=true`;
-      window.location.href = url;
+      // Redirecionar para o login administrativo
+      window.location.href = '/admin-login';
     } catch (error) {
       console.error('Erro ao preparar login direto:', error);
       toast.error('Erro ao preparar redirecionamento');
@@ -74,14 +78,7 @@ export default function SetupAdminPage() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <div className="flex flex-col items-center mb-4">
-            <Image
-              src="/s8-logo.png"
-              alt="S8 Garante"
-              width={180}
-              height={80}
-              priority
-              className="mb-4"
-            />
+            <LogoText width={180} height={80} className="mb-4" />
           </div>
           <CardTitle>Configuração do Administrador</CardTitle>
           <CardDescription>

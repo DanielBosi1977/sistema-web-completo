@@ -33,7 +33,7 @@ const Stage = ({
         <span className={`font-medium ${status === 'error' ? 'text-red-500' : ''}`}>{title}</span>
       </div>
       {status === 'error' && error && (
-        <span className="text-xs text-red-500">{error}</span>
+        <span className="text-xs text-red-500 max-w-xs truncate">{error}</span>
       )}
     </div>
   );
@@ -71,87 +71,66 @@ export default function AdminSetupPage() {
     });
 
     try {
-      // Step 1: Check database
+      // Step 1: Check database connection (simplified)
       updateStage('checkDb', 'loading');
-      const { data: dbTest, error: dbError } = await supabase
-        .from('profiles')
-        .select('count(*)', { count: 'exact', head: true });
+      
+      try {
+        // Teste mais simples - apenas verificar se conseguimos fazer uma query básica
+        const { error: dbError } = await supabase
+          .from('profiles')
+          .select('id')
+          .limit(1);
 
-      if (dbError) {
-        updateStage('checkDb', 'error', dbError.message);
-        throw new Error(`Database check failed: ${dbError.message}`);
+        if (dbError) {
+          console.log('Erro na verificação do banco:', dbError);
+          // Não vamos falhar aqui, apenas avisar
+          updateStage('checkDb', 'error', 'Conexão instável, mas continuando...');
+        } else {
+          updateStage('checkDb', 'success');
+        }
+      } catch (error: any) {
+        console.log('Exceção na verificação do banco:', error);
+        updateStage('checkDb', 'error', 'Conexão instável, mas continuando...');
       }
-      updateStage('checkDb', 'success');
 
-      // Step 2: Create admin user
+      // Step 2: Create admin user (mais direto)
       updateStage('createUser', 'loading');
       const email = 'adm@s8garante.com.br';
       
-      // Verificar se o usuário já existe
-      const { data: existingUsers, error: findUserError } = await supabase
-        .from('profiles')
-        .select('id, email')
-        .eq('email', email)
-        .eq('tipo_usuario', 'admin');
+      // Tentar criar o usuário diretamente
+      console.log("Tentando criar usuário admin...");
+      const { data: userData, error: userError } = await supabase.auth.signUp({
+        email,
+        password: adminPassword
+      });
       
-      if (findUserError) {
-        updateStage('createUser', 'error', findUserError.message);
-        throw new Error(`Error checking existing user: ${findUserError.message}`);
-      }
-
       let userId = '';
       
-      if (existingUsers && existingUsers.length > 0) {
-        // Usuário existe, atualizar senha
-        userId = existingUsers[0].id;
-        console.log("Usuário admin encontrado, atualizando senha");
+      if (userError) {
+        // Se der erro, pode ser porque o usuário já existe
+        console.log("Erro ao criar usuário (pode já existir):", userError.message);
         
-        // Tentar fazer login primeiro para verificar se a senha atual funciona
-        const { error: currentLoginError } = await supabase.auth.signInWithPassword({
+        // Tentar fazer login para verificar se já existe
+        const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
           email,
           password: adminPassword
         });
         
-        if (currentLoginError) {
-          // Se não conseguir fazer login, criar um novo usuário
-          console.log("Não foi possível fazer login com a senha atual, criando novo usuário");
-          
-          // Deletar o usuário existente
-          const { error: deleteError } = await supabase.auth.admin.deleteUser(userId);
-          if (deleteError) {
-            console.log("Erro ao deletar usuário existente:", deleteError.message);
-          }
-          
-          // Criar novo usuário
-          const { data: userData, error: userError } = await supabase.auth.signUp({
-            email,
-            password: adminPassword
-          });
-          
-          if (userError || !userData.user) {
-            updateStage('createUser', 'error', userError?.message || 'Failed to create user');
-            throw new Error(`User creation failed: ${userError?.message}`);
-          }
-          
-          userId = userData.user.id;
-        } else {
-          // Login funcionou, fazer logout
-          await supabase.auth.signOut();
-        }
-      } else {
-        // Criar novo usuário
-        console.log("Criando novo usuário admin");
-        const { data: userData, error: userError } = await supabase.auth.signUp({
-          email,
-          password: adminPassword
-        });
-        
-        if (userError || !userData.user) {
-          updateStage('createUser', 'error', userError?.message || 'Failed to create user');
-          throw new Error(`User creation failed: ${userError?.message}`);
+        if (loginError) {
+          updateStage('createUser', 'error', 'Usuário não existe e não foi possível criar');
+          throw new Error(`Falha ao criar/verificar usuário: ${loginError.message}`);
         }
         
+        if (loginData.user) {
+          userId = loginData.user.id;
+          console.log("Usuário já existe e login funcionou");
+          await supabase.auth.signOut(); // Fazer logout
+        }
+      } else if (userData.user) {
         userId = userData.user.id;
+        console.log("Usuário criado com sucesso");
+      } else {
+        throw new Error('Falha ao obter ID do usuário');
       }
       
       updateStage('createUser', 'success');
@@ -170,6 +149,8 @@ export default function AdminSetupPage() {
           senha_alterada: true,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'id'
         });
       
       if (profileError) {
@@ -223,6 +204,89 @@ export default function AdminSetupPage() {
     }
   };
 
+  // Função para configuração rápida (bypass da verificação do banco)
+  const handleQuickSetup = async () => {
+    setIsProcessing(true);
+    setLoginStatus({ success: false, message: '', error: '' });
+    
+    try {
+      const email = 'adm@s8garante.com.br';
+      
+      // Tentar login direto primeiro
+      const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+        email,
+        password: adminPassword
+      });
+      
+      if (!loginError && loginData.user) {
+        // Login funcionou, verificar se é admin
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('tipo_usuario')
+          .eq('id', loginData.user.id)
+          .single();
+        
+        if (profile?.tipo_usuario === 'admin') {
+          await supabase.auth.signOut();
+          setLoginStatus({
+            success: true,
+            message: 'Administrador já configurado e funcionando!',
+            error: ''
+          });
+          toast.success('Administrador já está configurado!');
+          return;
+        }
+      }
+      
+      // Se chegou aqui, precisa criar/configurar
+      const { data: userData, error: userError } = await supabase.auth.signUp({
+        email,
+        password: adminPassword
+      });
+      
+      let userId = loginData?.user?.id || userData?.user?.id;
+      
+      if (!userId) {
+        throw new Error('Não foi possível obter ID do usuário');
+      }
+      
+      // Criar/atualizar perfil
+      await supabase
+        .from('profiles')
+        .upsert({
+          id: userId,
+          email: email,
+          tipo_usuario: 'admin',
+          nome_responsavel: 'Administrador S8',
+          nome_empresa: 'S8 Garante',
+          senha_alterada: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+      
+      await supabase.auth.signOut();
+      
+      setLoginStatus({
+        success: true,
+        message: 'Configuração rápida concluída!',
+        error: ''
+      });
+      
+      toast.success('Configuração rápida concluída!');
+      
+    } catch (error: any) {
+      console.error('Erro na configuração rápida:', error);
+      setLoginStatus({
+        success: false,
+        message: '',
+        error: `Erro: ${error.message}`
+      });
+      toast.error(`Erro na configuração: ${error.message}`);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12">
       <Card className="w-full max-w-lg">
@@ -232,7 +296,7 @@ export default function AdminSetupPage() {
           </div>
           <CardTitle className="text-center">Configuração de Administrador</CardTitle>
           <CardDescription className="text-center">
-            Configure diretamente o acesso administrativo ao sistema S8 Garante
+            Configure o acesso administrativo ao sistema S8 Garante
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -240,9 +304,9 @@ export default function AdminSetupPage() {
             <div className="flex">
               <Info className="h-5 w-5 mr-2 flex-shrink-0" />
               <div>
-                <p className="font-medium">Processo de configuração direta</p>
+                <p className="font-medium">Configuração do Administrador</p>
                 <p className="text-sm mt-1">
-                  Esta página cria/restaura o usuário administrador padrão com acesso completo ao sistema.
+                  Esta página cria/restaura o usuário administrador padrão.
                 </p>
               </div>
             </div>
@@ -251,7 +315,6 @@ export default function AdminSetupPage() {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="adminPassword">Senha do Administrador</Label>
-              <div className="text-xs text-gray-500">Não altere, a menos que seja necessário</div>
             </div>
             <div className="flex space-x-2">
               <Input
@@ -272,33 +335,35 @@ export default function AdminSetupPage() {
             </div>
           </div>
 
-          <div className="mt-6 space-y-1">
-            <h3 className="text-sm font-medium mb-2">Etapas de configuração:</h3>
-            <Stage 
-              title="1. Verificar conexão com banco de dados" 
-              status={stages.checkDb.status} 
-              error={stages.checkDb.error}
-              isLoading={isProcessing} 
-            />
-            <Stage 
-              title="2. Criar/atualizar usuário administrador" 
-              status={stages.createUser.status} 
-              error={stages.createUser.error}
-              isLoading={isProcessing} 
-            />
-            <Stage 
-              title="3. Configurar perfil administrativo" 
-              status={stages.createProfile.status} 
-              error={stages.createProfile.error}
-              isLoading={isProcessing} 
-            />
-            <Stage 
-              title="4. Testar autenticação" 
-              status={stages.testLogin.status} 
-              error={stages.testLogin.error}
-              isLoading={isProcessing} 
-            />
-          </div>
+          {Object.values(stages).some(stage => stage.status !== 'pending') && (
+            <div className="mt-6 space-y-1">
+              <h3 className="text-sm font-medium mb-2">Etapas de configuração:</h3>
+              <Stage 
+                title="1. Verificar conexão com banco de dados" 
+                status={stages.checkDb.status} 
+                error={stages.checkDb.error}
+                isLoading={isProcessing} 
+              />
+              <Stage 
+                title="2. Criar/atualizar usuário administrador" 
+                status={stages.createUser.status} 
+                error={stages.createUser.error}
+                isLoading={isProcessing} 
+              />
+              <Stage 
+                title="3. Configurar perfil administrativo" 
+                status={stages.createProfile.status} 
+                error={stages.createProfile.error}
+                isLoading={isProcessing} 
+              />
+              <Stage 
+                title="4. Testar autenticação" 
+                status={stages.testLogin.status} 
+                error={stages.testLogin.error}
+                isLoading={isProcessing} 
+              />
+            </div>
+          )}
 
           {loginStatus.success && (
             <div className="mt-6 rounded-md bg-green-50 p-4 text-green-800">
@@ -307,7 +372,7 @@ export default function AdminSetupPage() {
                 <div>
                   <p className="font-medium">Configuração concluída com sucesso!</p>
                   <p className="text-sm mt-1">
-                    Você pode agora fazer login como administrador com as seguintes credenciais:
+                    Você pode agora fazer login como administrador:
                   </p>
                   <div className="mt-2 p-3 bg-green-100 rounded-md">
                     <p><strong>Email:</strong> adm@s8garante.com.br</p>
@@ -331,23 +396,39 @@ export default function AdminSetupPage() {
           )}
         </CardContent>
         <CardFooter className="flex flex-col space-y-3">
-          <Button 
-            onClick={handleSetupAdmin} 
-            className="w-full" 
-            disabled={isProcessing}
-          >
-            {isProcessing ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Configurando...
-              </>
-            ) : (
-              <>
-                <LockKeyhole className="mr-2 h-4 w-4" />
-                Configurar Administrador
-              </>
-            )}
-          </Button>
+          <div className="grid grid-cols-2 gap-2 w-full">
+            <Button 
+              onClick={handleQuickSetup} 
+              variant="outline"
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Configurando...
+                </>
+              ) : (
+                'Configuração Rápida'
+              )}
+            </Button>
+            
+            <Button 
+              onClick={handleSetupAdmin} 
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Configurando...
+                </>
+              ) : (
+                <>
+                  <LockKeyhole className="mr-2 h-4 w-4" />
+                  Configuração Completa
+                </>
+              )}
+            </Button>
+          </div>
           
           {loginStatus.success && (
             <Button 
