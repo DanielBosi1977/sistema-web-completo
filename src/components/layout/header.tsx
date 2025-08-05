@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { User, LogOut, Settings, Menu } from 'lucide-react';
+import { User, LogOut, Settings, Menu, Shield } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -53,6 +53,12 @@ export function Header({ toggleSidebar }: { toggleSidebar?: () => void }) {
             className="mr-2"
           />
           <span className="text-lg font-semibold tracking-tight">{APP_NAME}</span>
+          {isAdmin && (
+            <span className="ml-2 inline-flex items-center rounded-full bg-primary px-2 py-1 text-xs font-medium text-white">
+              <Shield className="mr-1 h-3 w-3" />
+              Admin
+            </span>
+          )}
         </div>
         
         <div className="ml-auto flex items-center gap-2">
@@ -80,9 +86,17 @@ export function Header({ toggleSidebar }: { toggleSidebar?: () => void }) {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button asChild variant="default">
-              <Link href="/login">Entrar</Link>
-            </Button>
+            <div className="flex gap-2">
+              <Button asChild variant="default">
+                <Link href="/login">Entrar</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/admin-login">
+                  <Shield className="mr-2 h-4 w-4" />
+                  Área Admin
+                </Link>
+              </Button>
+            </div>
           )}
         </div>
       </div>
